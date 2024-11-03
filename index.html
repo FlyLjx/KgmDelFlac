@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件夹上传并去掉后缀</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 80%;
+            margin: auto;
+            display: flex;
+        }
+        .converter {
+            flex: 0 0 60%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
+        }
+        .tutorial {
+            flex: 0 0 40%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            background-color: #f9f9f9;
+        }
+        .drop-area.hover {
+            background-color: #e0e0e0;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+            width: 50%;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        #progressContainer {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+        #progressBar {
+            width: 0;
+            height: 20px;
+            background-color: #28a745;
+            border-radius: 5px;
+            position: relative;
+            transition: width 0.4s ease;
+        }
+        #progressText {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+        }
+        .icon {
+            margin-right: 8px;
+        }
+        .tutorial h2 {
+            margin-top: 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            button {
+                font-size: 14px;
+            }
+            th, td {
+                font-size: 14px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fas fa-upload"></i> 上传文件夹并去掉后缀</h1>
+    <div class="container">
+        <div class="converter">
+            <div id="fileCount" style="margin-bottom: 20px;"></div>
+            <div id="progressContainer">
+                <div id="progressBar">
+                    <div id="progressText"></div>
+                </div>
+            </div>
+            <div class="drop-area" id="dropArea">
+                <i class="fas fa-folder-open"></i> 拖动文件夹到这里，或<br>
+                <button id="selectFolder"><i class="fas fa-folder-plus"></i> 点击选择文件夹</button>
+            </div>
+            <input type="file" id="folderUpload" webkitdirectory multiple style="display: none;">
+            <button id="removeSuffix"><i class="fas fa-check-circle"></i> 转换文件名</button>
+            <button id="downloadAll" style="display: none;"><i class="fas fa-download"></i> 下载全部</button>
+            <h2>文件名列表:</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>原始文件名</th>
+                        <th>新文件名</th>
+                    </tr>
+                </thead>
+                <tbody id="fileList"></tbody>
+            </table>
+        </div>
+        <div class="tutorial">
+            <h2>使用教程</h2>
+            <p>1. 将文件夹拖动到左侧区域，或点击按钮选择文件夹。</p>
+            <p>2. 确保上传的文件名以 <code>.kgm.flac</code> 结尾。</p>
+            <p>3. 点击“转换文件名”按钮，系统会去掉文件名中的 <code>.flac</code> 后缀，并保留 <code>.kgm</code>。</p>
+            <p>4. 点击“下载全部”按钮，可以下载转换后的文件。</p>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let totalFiles = 0;
+            const newFileNames = [];
+            const fileContents = [];
+
+            $('#selectFolder').on('click', function() {
+                $('#folderUpload').click();
+            });
+
+            const dropArea = $('#dropArea');
+
+            dropArea.on('dragover', function(event) {
+                event.preventDefault();
+                $(this).addClass('hover');
+            });
+
+            dropArea.on('dragleave', function(event) {
+                $(this).removeClass('hover');
+            });
+
+            dropArea.on('drop', function(event) {
+                event.preventDefault();
+                $(this).removeClass('hover');
+                const files = event.originalEvent.dataTransfer.files;
+                handleFiles(files);
+            });
+
+            $('#folderUpload').on('change', function() {
+                const files = $(this)[0].files;
+                handleFiles(files);
+            });
+
+            function handleFiles(files) {
+                $('#fileList').empty();
+                totalFiles = 0;
+                newFileNames.length = 0;
+                fileContents.length = 0;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.name.endsWith('.kgm.flac')) {
+                        totalFiles++;
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const content = e.target.result;
+                            fileContents.push(content);
+                        };
+                        reader.readAsArrayBuffer(file);
+                        $('#fileList').append(`<tr><td>${file.name}</td><td></td></tr>`);
+                    } else {
+                        console.log(`跳过文件: ${file.name}，因为它不是 .kgm.flac 文件`);
+                    }
+                }
+
+                if (totalFiles === 0) {
+                    $('#fileList').append(`<tr><td colspan="2">未找到 .kgm.flac 文件</td></tr>`);
+                } else {
+                    $('#fileCount').text(`已上传 ${totalFiles} 个文件`);
+                }
+            }
+
+            $('#removeSuffix').on('click', function() {
+                if (totalFiles === 0) return;
+
+                $('#progressContainer').show();
+                $('#progressBar').css('width', '0%');
+                $('#progressText').text('');
+
+                let processedFiles = 0;
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const originalFileName = $('#fileList tr').eq(i).find('td').eq(0).text();
+                    const newFileName = originalFileName.replace(/\.kgm\.flac$/, '').replace(/\.kgm$/, '') + '.kgm';
+
+                    newFileNames.push(newFileName);
+                    $('#fileList tr').eq(i).find('td').eq(1).text(newFileName);
+
+                    processedFiles++;
+                    const progressPercentage = (processedFiles / totalFiles) * 100;
+
+                    setTimeout(() => {
+                        $('#progressBar').css('width', progressPercentage + '%');
+                        $('#progressText').text(`正在处理: ${processedFiles}/${totalFiles}`);
+                    }, i * 100);
+                }
+
+                $('#downloadAll').show();
+            });
+
+            $('#downloadAll').on('click', function() {
+                let downloadedFiles = 0;
+
+                function downloadNextFile() {
+                    if (downloadedFiles < totalFiles) {
+                        const newFileName = newFileNames[downloadedFiles];
+                        const content = fileContents[downloadedFiles];
+                        const blob = new Blob([content], { type: 'audio/flac' });
+                        saveAs(blob, newFileName);
+
+                        downloadedFiles++;
+                        const progressPercentage = (downloadedFiles / totalFiles) * 100;
+                        $('#progressBar').css('width', progressPercentage + '%');
+                        $('#progressText').text(`已下载: ${downloadedFiles}/${totalFiles}`);
+
+                        setTimeout(downloadNextFile, 500);
+                    } else {
+                        $('#progressText').text('所有文件已下载完成！');
+                    }
+                }
+
+                downloadNextFile();
+            });
+        });
+    </script>
+</body>
+</html>
