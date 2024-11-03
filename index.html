@@ -24,20 +24,18 @@
             margin: auto;
             display: flex;
         }
-        .converter {
-            flex: 0 0 60%;
+        .converter, .tutorial {
             background: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .converter {
+            flex: 0 0 60%;
             margin-right: 20px;
         }
         .tutorial {
             flex: 0 0 40%;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .drop-area {
             border: 2px dashed #ccc;
@@ -124,6 +122,11 @@
         @media (max-width: 600px) {
             .container {
                 flex-direction: column;
+            }
+            .converter, .tutorial {
+                flex: 1 0 100%;
+                margin-right: 0; /* 清除右边距 */
+                margin-bottom: 20px; /* 添加底部间距 */
             }
             h1 {
                 font-size: 1.5em;
@@ -283,6 +286,7 @@
                         setTimeout(downloadNextFile, 500);
                     } else {
                         $('#progressText').text('所有文件已下载完成！');
+						location.reload(); // 自动刷新页面
                     }
                 }
 
