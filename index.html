@@ -71,16 +71,20 @@
             cursor: not-allowed;
         }
         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: left;
-            width: 50%;
-        }
+			width: 100%;
+			max-width: 100%;
+			border-collapse: collapse;
+			margin-top: 20px;
+			table-layout: fixed; /* 固定列宽 */
+		}
+
+		th, td {
+			padding: 10px;
+			border: 1px solid #ccc;
+			text-align: left;
+			word-wrap: break-word; /* 允许文本换行 */
+		}
+
         th {
             background-color: #f8f9fa;
             color: #333;
@@ -170,14 +174,11 @@
             </table>
         </div>
         <div class="tutorial">
-            <h1>使用教程（必看！！）</h1>
-	    <h2>店家联系方式为:-ljxxx（微信），有问题请联系，虚拟产品无法退款请注意！</h2>
-	    <h2>目的：当歌曲格式是kgm.flac时，是不能转换MP3格式的，所以有了此工具.请按照一下教程进行操作！！！</h2>
+            <h2>使用教程（必看！！）</h2>
             <p>1. 将文件夹或者歌曲文件拖动到左侧区域，或点击按钮选择文件夹。</p>
             <p>2. 确保上传的文件名以 <code>.kgm.flac</code> 结尾。</p>
             <p>3. 点击“转换文件名”按钮，系统会去掉文件名中的 <code>.flac</code> 后缀，并保留 <code>.kgm</code>。</p>
             <p>4. 点击“下载全部”按钮，可以下载转换后的文件。</p>
-	    <p>5. 打开解密平台，将刚刚下载的歌曲上传到解密平台中进行解密操作。</p>
         </div>
     </div>
 
@@ -272,28 +273,27 @@
             });
 
             $('#downloadAll').on('click', function() {
-                let downloadedFiles = 0;
+				let downloadedFiles = 0;
 
-                function downloadNextFile() {
-                    if (downloadedFiles < totalFiles) {
-                        const newFileName = newFileNames[downloadedFiles];
-                        const content = fileContents[downloadedFiles];
-                        const blob = new Blob([content], { type: 'audio/flac' });
-                        saveAs(blob, newFileName);
+				function downloadNextFile() {
+					if (downloadedFiles < totalFiles) {
+						const newFileName = newFileNames[downloadedFiles];
+						const content = fileContents[downloadedFiles];
+						const blob = new Blob([content], { type: 'application/octet-stream' }); // 使用通用类型
+						saveAs(blob, newFileName); // 直接使用 newFileName
 
-                        downloadedFiles++;
-                        const progressPercentage = (downloadedFiles / totalFiles) * 100;
-                        $('#progressBar').css('width', progressPercentage + '%');
-                        $('#progressText').text(`已下载: ${downloadedFiles}/${totalFiles}`);
+						downloadedFiles++;
+						const progressPercentage = (downloadedFiles / totalFiles) * 100;
+						$('#progressBar').css('width', progressPercentage + '%');
+						$('#progressText').text(`已下载: ${downloadedFiles}/${totalFiles}`);
 
-                        setTimeout(downloadNextFile, 500);
-                    } else {
-                        $('#progressText').text('所有文件已下载完成！');
+						setTimeout(downloadNextFile, 500);
+					} else {
+						$('#progressText').text('所有文件已下载完成！');
 						location.reload(); // 自动刷新页面
-                    }
-                }
-
-                downloadNextFile();
+					}
+				}
+				downloadNextFile();
             });
         });
     </script>
